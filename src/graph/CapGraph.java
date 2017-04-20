@@ -3,6 +3,7 @@
  */
 package graph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,13 +20,11 @@ import util.GraphLoader;
  */
 public class CapGraph implements Graph {
 	private HashMap<Integer, HashSet<Integer>> vertices;
-//	private HashMap<Integer, Vertex> vertexNodes;
 	private int numVertices;
 	
 	public CapGraph()
 	{
 		vertices = new HashMap<Integer, HashSet<Integer>>();
-//		vertexNodes = new HashMap<Integer, Vertex>();
 		numVertices = 0;
 	}
 	
@@ -86,14 +85,6 @@ public class CapGraph implements Graph {
 			egoNet.addEdge(originalNeighbor, center);
 		}
 		
-		
-//		for(Vertex origNeighbor : vertexNodes.get(center).getNeighbors()) {
-//			egoNet.addVertex(origNeighbor.getNum());
-//			// And add these new vertexNodes as center's neighbors in new egoNet
-//			egoNet.addEdge(center, origNeighbor.getNum());
-//			egoNet.addEdge(origNeighbor.getNum(), center);
-//		}
-		
 		// Then for each of the original neighbors, see if its neighbors are in new graph. If so, add these as edges for new neighbor.
 		for(Integer originalNeighbor : getNeighbors(center)) {
 			for(Integer originalNeighborsNeighbor : getNeighbors(originalNeighbor)) {
@@ -103,15 +94,6 @@ public class CapGraph implements Graph {
 				}
 			}
 		}
-		
-//		for(Vertex origNeighbor : vertexNodes.get(center).getNeighbors()) {
-//			for(Vertex origNeighborsNeighbor : origNeighbor.getNeighbors()) {
-//				if(egoNet.vertexNodes.containsKey(origNeighborsNeighbor.getNum())) {
-//					egoNet.addEdge(origNeighbor.getNum(), origNeighborsNeighbor.getNum());
-//					egoNet.addEdge(origNeighborsNeighbor.getNum(), origNeighbor.getNum());
-//				}
-//			}
-//		}
 	
 		return egoNet;
 	}
@@ -122,96 +104,95 @@ public class CapGraph implements Graph {
 	 */
 	@Override
 	public List<Graph> getSCCs() {
-		// Create a new graph to use for SCCs
-//		CapGraph g = new CapGraph();		
-//		for(Integer v : this.vertices.keySet()) {
-//			g.addVertex(v);
-//		}
-//		for(Vertex v : g.vertexNodes.values()) {
-//			for (Integer n : v.getNeighborNums()) {
-//				g.addEdge(v.getNum(), n);
-//			}
-//		}
-//		// Initialize verticesSCC Stack
-//		Stack<Vertex> verticesSCC = new Stack<Vertex>();
-//		for(Vertex v : g.vertexNodes.values()) {
-//			verticesSCC.add(v);
-//		}
-//		// Initialize finished Stack
-//		Stack<Vertex> finished = new Stack<Vertex>();
-//		
-//		
-//		// Visit all vertexNodes, returning the ‘Finished’ stack
-//		finished = dfs(g, verticesSCC);
-//		
-//				
-//		// Transpose the graph; Flip direction of all edges
-//		CapGraph gT = new CapGraph();
-//		for(Integer v : this.vertices.keySet()) {
-//			g.addVertex(v);
-//		}
-//		for(Vertex v : gT.vertexNodes.values()) {
-//			for (Integer n : v.getNeighborNums()) {
-//				g.addEdge(n, v.getNum());
-//			}
-//		}
-//		
-//		// Visit all vertexNodes in 'Finshed' stack, returning the  new ‘Finished’ stack
-//
-//		
-		return null;
+		
+		// Initialize vertexStack
+		Stack<Integer> vertexStack = new Stack<Integer>();
+		
+		for(Integer v : vertices.keySet()) {
+			vertexStack.add(v);
+		}
+		
+		// Initialize finished Stack
+		Stack<Integer> finished = new Stack<Integer>();
+		
+		// Visit all vertexNodes, returning the ‘Finished’ stack
+		finished = dfs(this, vertexStack);
+				
+		// Transpose the graph; Flip direction of all edges
+		CapGraph gT = new CapGraph();	
+		
+		for(Integer v : this.vertices.keySet()) {
+			gT.addVertex(v);
+			for(Integer neighbor : vertices.get(v)) {
+				gT.addVertex(neighbor);
+				gT.addEdge(neighbor, v);
+			}
+		}
+		
+		// Visit all vertexNodes in 'Finished' stack, returning the  new ‘Finished’ stack
+		return dfsSCC(gT, finished);
+	}
+	
+	public Stack<Integer> dfs(CapGraph g, Stack<Integer> vertices) {
+		
+		HashSet<Integer> visited = new HashSet<Integer>();
+		Stack<Integer> finished = new Stack<Integer>();
+		
+		while (!vertices.isEmpty()) {
+			Integer v = vertices.pop();
+			List<Integer> sccList = new ArrayList<Integer>();
+			
+			if (!visited.contains(v)) {
+				sccList.add(v);
+				dfsVisit(g, v, visited, finished);
+			}
+		}
+		
+		return finished;
+	}
+	
+	private void dfsVisit(CapGraph g, Integer v, HashSet<Integer> visited, Stack<Integer> finished) {
+		visited.add(v);
+		for (Integer n : g.getNeighbors(v)) {
+			if (!visited.contains(n)) {
+				dfsVisit(g, n, visited, finished);
+			}
+		}
+		finished.push(v);
+		return;
 	}
 
-//	public Stack<Integer> dfs(Graph g, Stack<Integer> vertexNodes) {
-//		HashSet<Integer> visited = new HashSet<Integer>();
-//		Stack<Integer> finished = new Stack<Integer>();
-//		
-//		while (!vertexNodes.isEmpty()) {
-//			Integer v = vertexNodes.pop();
-//			if (!visited.contains(v)) {
-//				dfsVisit(g, v, visited, finished);
-//			}
-//		}
-//		
-//		return finished;
-//	}
-//	
-//	private void dfsVisit(Graph g, Integer v, HashSet<Integer> visited, Stack<Integer> finished) {
-//		visited.add(v);
-//		for (Integer n : v.getNeighbors()) {
-//			if (!visited.contains(n)) {
-//				dfsVisit(g, n, visited, finished);
-//			}
-//		}
-//		finished.push(v);
-//		return;
-//	}
+	public List<Graph> dfsSCC(CapGraph g, Stack<Integer> vertices) {
+		
+		HashSet<Integer> visited = new HashSet<Integer>();
+		List<Graph> sccList = new ArrayList<Graph>();
+		
+		while (!vertices.isEmpty()) {
+			Integer v = vertices.pop();
+			
+			if (!visited.contains(v)) {
+				// v is root of a new SCC
+				CapGraph scc = new CapGraph();
+				scc.addVertex(v);
+				// Nodes visited during this dfsVisit call are added to the SCC graph for v
+				dfsVisitSCC(g, v, visited, scc);
+				sccList.add(scc);
+			}
+		}
+		
+		return sccList;
+	}
 	
-//	
-//	public Stack<Vertex> dfs(Graph g, Stack<Vertex> vertexNodes) {
-//		HashSet<Vertex> visited = new HashSet<Vertex>();
-//		Stack<Vertex> finished = new Stack<Vertex>();
-//		
-//		while (!vertexNodes.isEmpty()) {
-//			Vertex v = vertexNodes.pop();
-//			if (!visited.contains(v)) {
-//				dfsVisit(g, v, visited, finished);
-//			}
-//		}
-//		
-//		return finished;
-//	}
-//	
-//	private void dfsVisit(Graph g, Vertex v, HashSet<Vertex> visited, Stack<Vertex> finished) {
-//		visited.add(v);
-//		for (Vertex n : v.getNeighbors()) {
-//			if (!visited.contains(n)) {
-//				dfsVisit(g, n, visited, finished);
-//			}
-//		}
-//		finished.push(v);
-//		return;
-//	}
+	private void dfsVisitSCC(CapGraph g, Integer v, HashSet<Integer> visited, CapGraph scc) {
+		visited.add(v);
+		for (Integer n : g.getNeighbors(v)) {
+			if (!visited.contains(n)) {
+				dfsVisitSCC(g, n, visited, scc);
+			}
+		}
+		scc.addVertex(v);
+		return;
+	}
 
 	/* (non-Javadoc)
 	 * @see graph.Graph#exportGraph()
@@ -231,10 +212,10 @@ public class CapGraph implements Graph {
 	
 	
 	public static void main (String[] args) {
-//		CapGraph testGraph = new CapGraph();
-//		GraphLoader.loadGraph(testGraph, "data/small_test_graph.txt");
+		CapGraph testGraph = new CapGraph();
+		GraphLoader.loadGraph(testGraph, "data/scc/test_1.txt");
 //		GraphLoader.loadGraph(testGraph, "data/facebook_1000.txt");
-//		testGraph.exportGraph();
+		testGraph.exportGraph();
 //		System.out.println("\negonet:");
 //		testGraph.getEgonet(3).exportGraph();
 	}
