@@ -6,6 +6,7 @@ package graph;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import util.GraphLoader;
 
 /**
  * @author Your name here.
@@ -15,14 +16,33 @@ import java.util.List;
  *
  */
 public class CapGraph implements Graph {
-
+	private HashMap<Integer, HashSet<Integer>> graph;
+	private HashMap<Integer, Vertex> vertices;
+	private int numVertices;
+	
+	public CapGraph()
+	{
+		graph = new HashMap<Integer, HashSet<Integer>>();
+		vertices = new HashMap<Integer, Vertex>();
+		numVertices = 0;
+	}
+	
 	/* (non-Javadoc)
 	 * @see graph.Graph#addVertex(int)
 	 */
 	@Override
 	public void addVertex(int num) {
-		// TODO Auto-generated method stub
+		// Validate Inputs
+		if(vertices.containsKey(num)) {
+			return;
+		}
 
+		// Create new Vertex and add vertex to graph
+		graph.put(num, new HashSet<Integer>());
+		vertices.put(num, new Vertex(num));		
+		numVertices++;
+		
+		return;
 	}
 
 	/* (non-Javadoc)
@@ -30,8 +50,20 @@ public class CapGraph implements Graph {
 	 */
 	@Override
 	public void addEdge(int from, int to) {
-		// TODO Auto-generated method stub
+		Vertex vFrom = vertices.get(from);
+		Vertex vTo = vertices.get(to);
+		if(vFrom == null || vTo == null) {
+			return;
+		}
 
+		if(vFrom.getNeighbors().contains(vTo)) {
+			return;
+		}
+		
+		vFrom.addNeighbor(vTo);
+		graph.get(from).add(to);
+		
+		return;
 	}
 
 	/* (non-Javadoc)
@@ -57,8 +89,22 @@ public class CapGraph implements Graph {
 	 */
 	@Override
 	public HashMap<Integer, HashSet<Integer>> exportGraph() {
-		// TODO Auto-generated method stub
-		return null;
+		for(Vertex v : vertices.values()) {
+			System.out.print("\n"+v.getNum()+": ");
+			StringBuffer neighbors = new StringBuffer();
+			for(Vertex n : v.getNeighbors()) {
+				neighbors.append(n.getNum()+" ");
+			}
+			System.out.print(neighbors);
+		}
+		return graph;
+	}
+	
+	public static void main (String[] args) {
+		CapGraph testGraph = new CapGraph();
+//		GraphLoader.loadGraph(testGraph, "data/small_test_graph.txt");
+		GraphLoader.loadGraph(testGraph, "data/facebook_1000.txt");
+		testGraph.exportGraph();
 	}
 
 }
