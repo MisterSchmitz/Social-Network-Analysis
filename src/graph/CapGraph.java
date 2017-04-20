@@ -16,13 +16,13 @@ import util.GraphLoader;
  *
  */
 public class CapGraph implements Graph {
-	private HashMap<Integer, HashSet<Integer>> graph;
+	private HashMap<Integer, HashSet<Integer>> gph;
 	private HashMap<Integer, Vertex> vertices;
 	private int numVertices;
 	
 	public CapGraph()
 	{
-		graph = new HashMap<Integer, HashSet<Integer>>();
+		gph = new HashMap<Integer, HashSet<Integer>>();
 		vertices = new HashMap<Integer, Vertex>();
 		numVertices = 0;
 	}
@@ -38,7 +38,7 @@ public class CapGraph implements Graph {
 		}
 
 		// Create new Vertex and add vertex to graph
-		graph.put(num, new HashSet<Integer>());
+		gph.put(num, new HashSet<Integer>());
 		vertices.put(num, new Vertex(num));		
 		numVertices++;
 		
@@ -61,7 +61,7 @@ public class CapGraph implements Graph {
 		}
 		
 		vFrom.addNeighbor(vTo);
-		graph.get(from).add(to);
+		gph.get(from).add(to);
 		
 		return;
 	}
@@ -71,8 +71,32 @@ public class CapGraph implements Graph {
 	 */
 	@Override
 	public Graph getEgonet(int center) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		// Create a new graph
+		CapGraph egoNet = new CapGraph();
+				
+		// Add center as a Vertex
+		egoNet.addVertex(center);
+		
+		// Add all of center's neighbors from main graph into new egoNet
+		for(Vertex origNeighbor : vertices.get(center).getNeighbors()) {
+			egoNet.addVertex(origNeighbor.getNum());
+			// And add these new vertices as center's neighbors in new egoNet
+			egoNet.addEdge(center, origNeighbor.getNum());
+			egoNet.addEdge(origNeighbor.getNum(), center);
+		}
+		
+		// Then for each of the original neighbors, see if its neighbors are in new graph. If so, add these as edges for new neighbor.
+		for(Vertex origNeighbor : vertices.get(center).getNeighbors()) {
+			for(Vertex origNeighborsNeighbor : origNeighbor.getNeighbors()) {
+				if(egoNet.vertices.containsKey(origNeighborsNeighbor.getNum())) {
+					egoNet.addEdge(origNeighbor.getNum(), origNeighborsNeighbor.getNum());
+					egoNet.addEdge(origNeighborsNeighbor.getNum(), origNeighbor.getNum());
+				}
+			}
+		}
+	
+		return egoNet;
 	}
 
 	/* (non-Javadoc)
@@ -97,14 +121,16 @@ public class CapGraph implements Graph {
 			}
 			System.out.print(neighbors);
 		}
-		return graph;
+		return gph;
 	}
 	
 	public static void main (String[] args) {
-		CapGraph testGraph = new CapGraph();
+//		CapGraph testGraph = new CapGraph();
 //		GraphLoader.loadGraph(testGraph, "data/small_test_graph.txt");
-		GraphLoader.loadGraph(testGraph, "data/facebook_1000.txt");
-		testGraph.exportGraph();
+////		GraphLoader.loadGraph(testGraph, "data/facebook_1000.txt");
+//		testGraph.exportGraph();
+//		System.out.println("\negonet:");
+//		testGraph.getEgonet(3).exportGraph();
 	}
 
 }
