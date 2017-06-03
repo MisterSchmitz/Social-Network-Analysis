@@ -4,15 +4,20 @@
 package graph;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import util.GraphLoader;
 
 /**
- * @author Your name here.
+ * @author Michael Schmitz
  * 
  * For the warm up assignment, you must implement your Graph in a class
  * named CapGraph.  Here is the stub file.
@@ -200,22 +205,76 @@ public class CapGraph implements Graph {
 	@Override
 	public HashMap<Integer, HashSet<Integer>> exportGraph() {
 		for(Integer v : vertices.keySet()) {
-			System.out.print("\n"+v+": ");
+			System.out.print(v+": ");
 			StringBuffer neighbors = new StringBuffer();
 			for(Integer n : getNeighbors(v)) {
 				neighbors.append(n+" ");
 			}
-			System.out.print(neighbors);
+			System.out.println(neighbors);
 		}
 		return vertices;
 	}
 	
+	public HashMap<Integer, Integer> getSimilar(int node){
+		HashSet<Integer> nodeNeighbors = new HashSet<Integer>(); 
+		HashMap<Integer, Integer> similarities = new HashMap<Integer, Integer>();
+		HashMap<Integer, Integer> similarNodes = new HashMap<Integer, Integer>();
+		
+		System.out.print("Papers similar to paper: "+node+"...\t");
+				
+		nodeNeighbors = getNeighbors(node);
+		
+		HashSet<Integer> otherNodes = new HashSet<Integer>(vertices.keySet());
+		otherNodes.removeIf(p -> p == node);
+		
+		for(Integer v : otherNodes) {
+			HashSet<Integer> intersection = new HashSet<Integer>(getNeighbors(v));
+			intersection.retainAll(nodeNeighbors);	//Find the intersection between node's neihbors and other node's neighbors
+			similarities.put(v, intersection.size());	//Count the number of similar neighbors
+		}
+		
+		// Return the 10 nodes with the most similar citations
+		similarNodes = (HashMap<Integer, Integer>) similarities.entrySet().stream()
+			.filter(p -> p.getValue() > 0)
+			.sorted(Collections.reverseOrder(HashMap.Entry.comparingByValue()))
+			.limit(10)	
+			.collect(Collectors.toMap(
+	                Map.Entry::getKey, 
+	                Map.Entry::getValue, 
+	                (e1, e2) -> e1, 
+	                LinkedHashMap::new
+	              ));
+		
+		return similarNodes;
+	}
 	
 	public static void main (String[] args) {
+		long startTime, endTime, duration;
+		
+		
 		CapGraph testGraph = new CapGraph();
-		GraphLoader.loadGraph(testGraph, "data/scc/test_1.txt");
-//		GraphLoader.loadGraph(testGraph, "data/facebook_1000.txt");
-		testGraph.exportGraph();
+		
+		System.out.print("Loading graph...");
+		startTime = System.nanoTime();
+//		GraphLoader.loadGraph(testGraph, "data/gscholar_test.txt");
+//		GraphLoader.loadGraph(testGraph, "data/gscholar_lite.txt");
+		GraphLoader.loadGraph(testGraph, "data/gscholar.txt");
+		endTime = System.nanoTime();
+		duration = (endTime - startTime) / 1000000;
+		System.out.print(" DONE: "+duration+" ms\n");
+		
+//		testGraph.exportGraph();
+		
+		startTime = System.nanoTime();
+		System.out.println(testGraph.getSimilar(57900));
+		endTime = System.nanoTime();
+		duration = (endTime - startTime) / 1000000;
+		System.out.print("Runtime: "+duration+" ms\t");
+		
+//		System.out.println(testGraph.getSimilar(73079));
+//		System.out.println(testGraph.getSimilar(18802));
+//		System.out.println(testGraph.getSimilar(73346));
+//		System.out.println(testGraph.getSimilar(80782));
 //		System.out.println("\negonet:");
 //		testGraph.getEgonet(3).exportGraph();
 	}
