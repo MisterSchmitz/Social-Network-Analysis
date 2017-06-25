@@ -3,6 +3,7 @@ package graph;
 public class Edge {
 	private int numFrom;
 	private int numTo;
+	private int betweenness;
 	
 	public Edge(int from, int to) {
 		this.numFrom = from;
@@ -23,6 +24,14 @@ public class Edge {
 	
 	public void setNumTo(int v) {
 		this.numTo = v;
+	}
+	
+	public int getBetweenness() {
+		return this.betweenness;
+	}
+	
+	public void setBetweenness(int v) {
+		this.betweenness = v;
 	}
 	
 	@Override
