@@ -80,21 +80,24 @@ public class CapGraph implements Graph {
 		return;
 	}
 	
+	/** Find the nodes which have an edge coming from a given node.
+	 * 
+	 * @param v The node for which to find the out-neighbors.
+	 * @return HashSet of out-neighbor nodes
+	 */
 	public HashSet<Integer> getNeighbors(int v) {
 		return vertices.get(v);
 	}
-
+	
+	/** Find the nodes which have an edge coming into a given node.
+	 * 
+	 * @param v The node for which to find the in-neighbors.
+	 * @return HashSet of in-neighbor nodes
+	 */
 	public HashSet<Integer> getInNeighbors(int v) {
 		return verticesInNeighbors.get(v);
 	}
 	
-	public HashSet<Integer> getAllNeighbors(int node) {
-		HashSet<Integer> neighbors = new HashSet<Integer>();
-		neighbors.addAll(this.getNeighbors(node));
-		neighbors.addAll(this.getInNeighbors(node));
-		return neighbors;
-	}
-
 	/* (non-Javadoc)
 	 * @see graph.Graph#exportGraph()
 	 */
@@ -112,6 +115,9 @@ public class CapGraph implements Graph {
 		return vertices;
 	}
 	
+	/** Helper method used for testing. Prints all the nodes and edges for a graph.
+	 * 
+	 */
 	public void exportGraphFlat() {
 		for(Integer v : this.vertices.keySet()) {
 			if(getNeighbors(v).size()==0) {
@@ -126,6 +132,11 @@ public class CapGraph implements Graph {
 		return;
 	}
 	
+	/** Identify 10 nodes most similar to a given node.
+	 * 
+	 * @param node The node for which to find similar nodes.
+	 * @return HashMap of similar nodes as keys, with values representing number of similar citations between given node and key node.
+	 */
 	public HashMap<Integer, Integer> getSimilar(int node){
 		HashSet<Integer> nodeNeighbors = new HashSet<Integer>(); 
 		HashMap<Integer, Integer> similarities = new HashMap<Integer, Integer>();
@@ -158,12 +169,17 @@ public class CapGraph implements Graph {
 		
 		return similarNodes;
 	}
-	
+
+	/** Identify communities in a graph.
+	 * 
+	 * @param numCommunities Desired maximum number of resulting communities
+	 * @return List of CapGraphs which represent the different communities.
+	 */
 	public List<CapGraph> getCommunities(int numCommunities) {
 		
 		List<CapGraph> communities = new  ArrayList<CapGraph>();
 		
-		int split = 1;
+		int splits = 1;
 		
 		Stack<Integer> rootNodes = new Stack<Integer>(); 
 		
@@ -177,9 +193,8 @@ public class CapGraph implements Graph {
 			}
 		}
 		
-		
 		// Do until we reach number of desired communities, or until there are no more edges
-		while(split < numCommunities && g.numEdges > 0) {
+		while(splits < numCommunities && g.numEdges > 0) {
 			// Compute the betweenness of all edges
 			// For each node, v, distribute flow from v to all other nodes
 			for (Integer v : g.vertices.keySet()) {
@@ -190,7 +205,7 @@ public class CapGraph implements Graph {
 			
 			// Find and remove the Edge with the highest betweenness
 			Edge e = g.getEdgeWithHighestBetweenness(g);
-			System.out.println("EdgeWithHighestBetweenness: "+e);
+//			System.out.println("EdgeWithHighestBetweenness: "+e);
 			int from = e.getNumFrom();
 			int to = e.getNumTo();
 			// Add nodes on either end of the edge to stack to return to later
@@ -198,7 +213,7 @@ public class CapGraph implements Graph {
 			if(!rootNodes.contains(to)) {rootNodes.push(to);}
 			g.removeEdge(from, to);
 						
-			split++;
+			splits++;
 		}
 		
 		while(!rootNodes.isEmpty()) {
@@ -208,13 +223,17 @@ public class CapGraph implements Graph {
 		return communities;
 	}
 	
+	/** Helper method for getCommunities.
+	 * 
+	 * @param g the graph
+	 * @return the Edge with the highest betweenness.
+	 */
 	private Edge getEdgeWithHighestBetweenness(CapGraph g) {
 		int from=0;
 		int to=0;
 		int max = 0;
 		for (Edge e : g.edges) {
 			int b = e.getBetweenness();
-//			System.out.println("Debug: "+e+": "+b);
 			if (b > max) {
 				from = e.getNumFrom();
 				to = e.getNumTo();
@@ -224,6 +243,11 @@ public class CapGraph implements Graph {
 		return g.findEdge(from, to);
 	}
 
+	/** Remove an edge from a given graph, given the from and to nodes.
+	 * 
+	 * @param from starting node for the Edge
+	 * @param to ending node for the Edge
+	 */
 	private void removeEdge(int from, int to){
 		// Verify that from and to vertices exist
 		if(!vertices.containsKey(from) || !vertices.containsKey(to)) {
@@ -242,33 +266,12 @@ public class CapGraph implements Graph {
 		return;
 	}
 	
-	/** Helper method for constructing the bfs-found path from start to goal
+	/** Find the Edge object corresponding to two Integers.
 	 * 
-	 * @param start The starting location
-	 * @param goal The goal location
-	 * @param parentMap Map linking nodes to their parent in path
-	 * @return the path of Integers from start to goal
+	 * @param from starting node for the Edge
+	 * @param to ending node for the Edge
+	 * @return The Edge corresponding to the given from and to integers
 	 */
-	private List<Integer> constructPath(Integer start, Integer goal, 
-			HashMap<Integer, Integer> parentMap) {
-
-		LinkedList<Integer> path = new LinkedList<Integer>();
-		Integer curr = goal;
-		while (!curr.equals(start)) {
-			path.addFirst(curr);
-
-			// Increase the betweenness for the edge from curr to parent
-			Edge e = findEdge(parentMap.get(curr), curr);
-			e.setBetweenness(e.getBetweenness()+1);
-//			System.out.println(e);
-			
-			curr = parentMap.get(curr);
-		}
-		path.addFirst(start);
-		return path;
-	}
-
-	
 	private Edge findEdge(Integer from, Integer to) {
 		for (Edge edge : edges) {
 			if(edge.getNumTo()==to && edge.getNumFrom()==from) {
@@ -278,6 +281,12 @@ public class CapGraph implements Graph {
 		return null;
 	}
 	
+	/** Find all nodes connected to a given root node. Optionally, provide a rough node limit for the returned graph.
+	 * 
+	 * @param root The starting node
+	 * @param roughGraphNodeLimit The rough size for the returned graph, in terms of nodes.
+	 * @return A new graph, centered around the given root node. All nodes are connected to this node in some way.
+	 */
 	public CapGraph getNodeReach(int root, int roughGraphNodeLimit) {
 		// Create a new graph
 		CapGraph subGraph = new CapGraph();
@@ -294,7 +303,7 @@ public class CapGraph implements Graph {
 			node = toVisit.pop();
 			subGraph.addVertex(node);
 			
-			// Add node's out-neighbors to subGraph
+			// Add node's out-neighbors to subGraph and toVisit Stack
 			HashSet<Integer> outNeighbors = this.getNeighbors(node);
 			for(Integer n : outNeighbors) {
 				if (!subGraph.vertices.containsKey(n)) {
@@ -304,7 +313,7 @@ public class CapGraph implements Graph {
 				subGraph.addEdge(node, n);
 			}
 			
-			// Add node's in-neighbors to subGraph
+			// Add node's in-neighbors to subGraph and toVisit Stack
 			HashSet<Integer> inNeighbors = this.getInNeighbors(node); 
 			for(Integer n : inNeighbors) {
 				if (!subGraph.vertices.containsKey(n)) {
@@ -327,9 +336,7 @@ public class CapGraph implements Graph {
 	 * @return The list of intersections that form the shortest (unweighted)
 	 *   path from start to goal (including both start and goal).
 	 */
-	public List<Integer> bfs(CapGraph g, int start, int goal) {
-//		System.out.println("Beginning bfs for: "+start+", "+goal);
-		
+	public List<Integer> bfs(CapGraph g, int start, int goal) {		
 		HashMap<Integer, Integer> parentMap = new HashMap<Integer, Integer>();
 		
 		// Search for a path using BFS
@@ -366,7 +373,6 @@ public class CapGraph implements Graph {
 			}
 			for (Integer neighbor : g.vertices.get(curr)) {
 				if (!visited.contains(neighbor)) {
-//					System.out.println("Debug: "+neighbor);
 					visited.add(neighbor);
 					parentMap.put(neighbor, curr);
 					toVisit.add(neighbor);
@@ -374,6 +380,31 @@ public class CapGraph implements Graph {
 			}
 		}
 		return found;
+	}
+	
+	/** Helper method for constructing the bfs-found path from start to goal. Used for increasing an edge's "betweenness"
+	 * 
+	 * @param start The starting location
+	 * @param goal The goal location
+	 * @param parentMap Map linking nodes to their parent in path
+	 * @return the path of Integers from start to goal
+	 */
+	private List<Integer> constructPath(Integer start, Integer goal, 
+			HashMap<Integer, Integer> parentMap) {
+
+		LinkedList<Integer> path = new LinkedList<Integer>();
+		Integer curr = goal;
+		while (!curr.equals(start)) {
+			path.addFirst(curr);
+
+			// Increase the betweenness for the edge from curr to parent
+			Edge e = findEdge(parentMap.get(curr), curr);
+			e.setBetweenness(e.getBetweenness()+1);
+			
+			curr = parentMap.get(curr);
+		}
+		path.addFirst(start);
+		return path;
 	}
 	
 	/* (non-Javadoc)
@@ -536,7 +567,6 @@ public class CapGraph implements Graph {
 //		for (CapGraph g : testGraph.getCommunities(2)) { g.exportGraphFlat();};
 		
 //		System.out.println(testGraph.getNeighbors(73079));
-//		System.out.println(testGraph.getAllNeighbors(73079));
 //		System.out.println(testGraph.getInNeighbors(3));
 //		System.out.println(testGraph.getSimilar(11314));
 		

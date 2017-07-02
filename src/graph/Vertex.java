@@ -15,15 +15,7 @@ public class Vertex {
 	public void setNum(int v) {
 		this.num = v;
 	}
-		
-//	public String getTitle() {
-//		return this.title;
-//	}
-//	
-//	public void setTitle(String s) {
-//		this.title = s;
-//	}
-//	
+
 	@Override
 	public String toString() {
 		return "V: "+this.getNum();
