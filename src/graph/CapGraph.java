@@ -162,9 +162,9 @@ public class CapGraph implements Graph {
 			.limit(10)	// Select only the first 10
 			.collect(Collectors.toMap(
 	                Map.Entry::getKey, 
-	                Map.Entry::getValue, // Keep the number of matches for testing purposes
+	                Map.Entry::getValue, // Keep the number of matches to more easily verify results
 	                (e1, e2) -> e1, 
-	                LinkedHashMap::new // Preserve the order 
+	                LinkedHashMap::new	 // Preserve the order
 	              ));
 		
 		return similarNodes;
@@ -291,8 +291,6 @@ public class CapGraph implements Graph {
 		// Create a new graph
 		CapGraph subGraph = new CapGraph();
 		int node;
-		// Add root as a Vertex
-		subGraph.addVertex(root);
 		
 		// Initialize
 		Stack<Integer> toVisit = new Stack<Integer>();
@@ -554,8 +552,9 @@ public class CapGraph implements Graph {
 		System.out.print(" DONE: "+duration+" ms\n");
 		
 		startTime = System.nanoTime();
-		CapGraph testSubGraph = testGraph.getNodeReach(11314, 1000);
-		testSubGraph.exportGraph();
+//		CapGraph testSubGraph = testGraph.getNodeReach(11314, 1000);
+//		testSubGraph.exportGraph();
+		testGraph.getNodeReach(11314, testGraph.numVertices);
 //		for (CapGraph g : testSubGraph.getCommunities(10)) { g.exportGraphFlat();};
 //		System.out.println(testSubGraph.getSimilar(11314));
 //		testSubGraph.exportGraphFlat();
